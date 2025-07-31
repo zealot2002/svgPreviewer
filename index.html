@@ -1146,6 +1146,11 @@
                         e.preventDefault();
                         e.stopPropagation();
                         
+                        // 只在网格视图下弹出对话框
+                        if (this.currentView !== 'grid') {
+                            return;
+                        }
+                        
                         try {
                             const fileInfoStr = card.dataset.fileInfo;
                             console.log(`点击卡片 ${index + 1}, fileInfo:`, fileInfoStr);
