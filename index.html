@@ -91,15 +91,36 @@
             font-weight: 500;
         }
 
+        .pagination .btn {
+            color: white !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
+        #prevBtn, #nextBtn {
+            color: white !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            color: white !important;
         }
 
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+            color: white !important;
+        }
+
+        .pagination .btn:hover,
+        .pagination .btn:disabled,
+        #prevBtn:hover,
+        #nextBtn:hover,
+        #prevBtn:disabled,
+        #nextBtn:disabled {
+            color: white !important;
         }
 
         .status {
@@ -444,10 +465,6 @@
         </div>
 
         <div id="gallery" class="gallery">
-            <div class="empty-state">
-                <h3>📁 等待扫描</h3>
-                <p>请输入目录路径并点击"开始扫描"来发现SVG文件</p>
-            </div>
         </div>
 
         <div id="pagination" class="pagination" style="display: none;">
@@ -533,6 +550,11 @@
             }
 
             showStatus(message, type = 'loading') {
+                // 不显示成功消息，避免占用空间
+                if (type === 'success') {
+                    return;
+                }
+                
                 this.status.textContent = message;
                 this.status.className = `status ${type}`;
                 this.status.style.display = 'block';
