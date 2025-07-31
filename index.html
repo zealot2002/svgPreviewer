@@ -82,7 +82,7 @@
         .btn {
             padding: 15px 30px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            color: white !important;
             border: none;
             border-radius: 10px;
             font-size: 16px;
@@ -692,13 +692,15 @@
                     const fileType = file.type || 'svg';
                     const typeLabel = fileType === 'android-vector' ? 'Android' : 'SVG';
                     
+                    const fileInfo = {
+                        name: file.name,
+                        path: file.path,
+                        size: this.formatFileSize(file.size),
+                        type: fileType
+                    };
+                    
                     return `
-                        <div class="svg-card" data-file-info="${JSON.stringify({
-                            name: file.name,
-                            path: file.path,
-                            size: this.formatFileSize(file.size),
-                            type: fileType
-                        })}">
+                        <div class="svg-card" data-file-info='${JSON.stringify(fileInfo)}'>
                             <div class="svg-preview">
                                 <div class="file-type-badge">${typeLabel}</div>
                                 ${this.getSVGContent(file)}
@@ -713,20 +715,39 @@
 
             addDoubleClickCopyFunctionality() {
                 const cards = document.querySelectorAll('.svg-card');
-                cards.forEach(card => {
+                console.log(`找到 ${cards.length} 个SVG卡片`);
+                
+                cards.forEach((card, index) => {
                     card.addEventListener('dblclick', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         
-                        const fileInfo = JSON.parse(card.dataset.fileInfo);
-                        const textToCopy = `文件名: ${fileInfo.name}\n文件路径: ${fileInfo.path}\n文件大小: ${fileInfo.size}\n文件类型: ${fileInfo.type}`;
-                        
-                        navigator.clipboard.writeText(textToCopy).then(() => {
-                            this.showToast('复制成功');
-                        }).catch(err => {
-                            console.error('复制失败:', err);
-                            this.showToast('复制失败');
-                        });
+                        try {
+                            const fileInfoStr = card.dataset.fileInfo;
+                            console.log(`双击卡片 ${index + 1}, fileInfo:`, fileInfoStr);
+                            
+                            if (!fileInfoStr) {
+                                console.error('没有找到文件信息');
+                                this.showToast('复制失败：没有文件信息');
+                                return;
+                            }
+                            
+                            const fileInfo = JSON.parse(fileInfoStr);
+                            const textToCopy = `文件名: ${fileInfo.name}\n文件路径: ${fileInfo.path}\n文件大小: ${fileInfo.size}\n文件类型: ${fileInfo.type}`;
+                            
+                            console.log('准备复制文本:', textToCopy);
+                            
+                            navigator.clipboard.writeText(textToCopy).then(() => {
+                                console.log('复制成功');
+                                this.showToast('复制成功');
+                            }).catch(err => {
+                                console.error('复制失败:', err);
+                                this.showToast('复制失败');
+                            });
+                        } catch (error) {
+                            console.error('处理双击事件失败:', error);
+                            this.showToast('复制失败：数据解析错误');
+                        }
                     });
                 });
             }
