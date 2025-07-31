@@ -193,7 +193,7 @@ app.get('/api/scan-progress', (req, res) => {
 // 分页获取SVG文件列表
 app.get('/api/svg-files', (req, res) => {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 100;
+    const limit = parseInt(req.query.limit) || 200;
     const search = req.query.search || '';
     
     // 从全局变量获取扫描结果（在实际应用中应该使用数据库或缓存）

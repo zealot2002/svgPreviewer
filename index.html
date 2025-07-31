@@ -261,12 +261,27 @@
             justify-content: center;
             width: 60px;
             height: 60px;
+            cursor: pointer;
         }
 
-        .svg-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-            border-color: #667eea;
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .svg-preview {
@@ -289,28 +304,7 @@
         }
 
         .svg-info {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 12px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            border-radius: 8px;
-            user-select: text;
-            cursor: text;
-        }
-
-        .svg-card:hover .svg-info {
-            opacity: 1;
+            display: none;
         }
 
         .svg-filename {
@@ -499,7 +493,7 @@
                 
                 this.currentPage = 1;
                 this.currentSearch = '';
-                this.pageSize = 100;
+                this.pageSize = 200;
                 this.progressInterval = null;
                 
                 this.bindEvents();
@@ -699,52 +693,71 @@
                     const typeLabel = fileType === 'android-vector' ? 'Android' : 'SVG';
                     
                     return `
-                        <div class="svg-card">
+                        <div class="svg-card" data-file-info="${JSON.stringify({
+                            name: file.name,
+                            path: file.path,
+                            size: this.formatFileSize(file.size),
+                            type: fileType
+                        })}">
                             <div class="svg-preview">
                                 <div class="file-type-badge">${typeLabel}</div>
                                 ${this.getSVGContent(file)}
-                            </div>
-                            <div class="svg-info" title="点击可复制文件路径">
-                                <div class="svg-filename" title="文件名">${file.name}</div>
-                                <div class="svg-path" title="文件路径">${file.path}</div>
-                                <div class="svg-size" title="文件大小">${this.formatFileSize(file.size)}</div>
                             </div>
                         </div>
                     `;
                 }).join('');
 
-                // 添加点击复制功能
-                this.addCopyFunctionality();
+                // 添加双击复制功能
+                this.addDoubleClickCopyFunctionality();
             }
 
-            addCopyFunctionality() {
-                const infoElements = document.querySelectorAll('.svg-info');
-                infoElements.forEach(info => {
-                    info.addEventListener('click', (e) => {
+            addDoubleClickCopyFunctionality() {
+                const cards = document.querySelectorAll('.svg-card');
+                cards.forEach(card => {
+                    card.addEventListener('dblclick', (e) => {
+                        e.preventDefault();
                         e.stopPropagation();
-                        const pathElement = info.querySelector('.svg-path');
-                        if (pathElement) {
-                            const textToCopy = pathElement.textContent;
-                            navigator.clipboard.writeText(textToCopy).then(() => {
-                                // 显示复制成功提示
-                                this.showCopySuccess(info);
-                            }).catch(err => {
-                                console.error('复制失败:', err);
-                            });
-                        }
+                        
+                        const fileInfo = JSON.parse(card.dataset.fileInfo);
+                        const textToCopy = `文件名: ${fileInfo.name}\n文件路径: ${fileInfo.path}\n文件大小: ${fileInfo.size}\n文件类型: ${fileInfo.type}`;
+                        
+                        navigator.clipboard.writeText(textToCopy).then(() => {
+                            this.showToast('复制成功');
+                        }).catch(err => {
+                            console.error('复制失败:', err);
+                            this.showToast('复制失败');
+                        });
                     });
                 });
             }
 
-            showCopySuccess(element) {
-                const originalOpacity = element.style.opacity;
-                element.style.background = 'rgba(76, 175, 80, 0.9)';
-                element.style.opacity = '1';
-                
+            showToast(message) {
+                // 移除现有的toast
+                const existingToast = document.querySelector('.toast');
+                if (existingToast) {
+                    existingToast.remove();
+                }
+
+                // 创建新的toast
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                // 显示toast
                 setTimeout(() => {
-                    element.style.background = 'rgba(0, 0, 0, 0.9)';
-                    element.style.opacity = originalOpacity;
-                }, 1000);
+                    toast.classList.add('show');
+                }, 100);
+
+                // 3秒后隐藏toast
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }, 3000);
             }
 
             getSVGContent(file) {
