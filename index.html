@@ -15,16 +15,19 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
+            margin: 0;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border-radius: 0;
+            box-shadow: none;
             overflow: hidden;
+            min-height: 100vh;
         }
 
         .header {
@@ -46,7 +49,7 @@
         }
 
         .input-section {
-            padding: 30px;
+            padding: 20px;
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
         }
@@ -160,16 +163,16 @@
         }
 
         .gallery {
-            padding: 30px;
+            padding: 15px;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            max-height: 60vh;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            max-height: 70vh;
             overflow-y: auto;
         }
 
         .search-section {
-            padding: 20px 30px;
+            padding: 15px 20px;
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
         }
@@ -191,7 +194,7 @@
         }
 
         .pagination {
-            padding: 20px 30px;
+            padding: 15px 20px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -229,40 +232,41 @@
 
         .file-type-badge {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 5px;
+            right: 5px;
             background: rgba(0, 0, 0, 0.7);
             color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 8px;
             font-weight: 600;
         }
 
         .svg-card {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             transition: all 0.3s ease;
-            border: 2px solid transparent;
+            border: 1px solid #e9ecef;
         }
 
         .svg-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
             border-color: #667eea;
         }
 
         .svg-preview {
             width: 100%;
-            height: 200px;
+            height: 100px;
             background: #f8f9fa;
             display: flex;
             align-items: center;
             justify-content: center;
             border-bottom: 1px solid #e9ecef;
-            padding: 10px;
+            padding: 5px;
+            position: relative;
         }
 
         .svg-preview svg {
@@ -272,20 +276,29 @@
         }
 
         .svg-info {
-            padding: 15px;
+            padding: 8px;
         }
 
         .svg-filename {
             font-weight: 600;
             color: #333;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
             word-break: break-all;
+            font-size: 11px;
+            line-height: 1.2;
         }
 
         .svg-path {
-            font-size: 12px;
+            font-size: 9px;
             color: #666;
             word-break: break-all;
+            line-height: 1.1;
+        }
+
+        .svg-size {
+            font-size: 9px;
+            color: #999;
+            margin-top: 2px;
         }
 
         .empty-state {
@@ -306,14 +319,14 @@
         }
 
         .stats {
-            padding: 20px 30px;
+            padding: 15px 20px;
             background: #f8f9fa;
             border-top: 1px solid #e9ecef;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
         }
 
         .stat-item {
@@ -343,13 +356,26 @@
             }
             
             .gallery {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                gap: 15px;
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 8px;
+                padding: 10px;
             }
             
             .stats {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+
+        @media (min-width: 1600px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
             }
         }
     </style>
