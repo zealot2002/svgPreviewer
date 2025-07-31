@@ -1,3 +1,10 @@
+#!/usr/bin/env node
+
+/**
+ * Android Studio SVG预览器插件
+ * 用于在Android Studio中预览SVG和Vector Drawable文件
+ */
+
 const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
@@ -20,6 +27,26 @@ global.scanProgress = {
 app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
+
+// SVG识别函数
+function isValidSVG(content) {
+    const hasSvgTag = /<svg[^>]*>/i.test(content);
+    const hasSvgNamespace = /xmlns="http:\/\/www\.w3\.org\/2000\/svg"/i.test(content);
+    const hasClosingSvgTag = /<\/svg>/i.test(content);
+    const hasGraphicElements = /<(path|rect|circle|ellipse|line|polyline|polygon|text|g|use|image)[^>]*>/i.test(content);
+    
+    return hasSvgTag && hasClosingSvgTag && (hasSvgNamespace || hasGraphicElements);
+}
+
+// Android Vector Drawable识别函数
+function isAndroidVectorDrawable(content) {
+    const hasAndroidNamespace = /xmlns:android="http:\/\/schemas\.android\.com\/apk\/res\/android"/i.test(content);
+    const hasVectorTag = /<vector[^>]*>/i.test(content);
+    const hasClosingVectorTag = /<\/vector>/i.test(content);
+    const hasPathElement = /<path[^>]*>/i.test(content);
+    
+    return hasAndroidNamespace && hasVectorTag && hasClosingVectorTag && hasPathElement;
+}
 
 // 递归扫描目录函数
 async function scanDirectory(dirPath) {
@@ -67,30 +94,6 @@ async function scanDirectory(dirPath) {
     }
 }
 
-// SVG识别函数
-function isValidSVG(content) {
-    // 检查是否包含有效的SVG标签
-    const hasSvgTag = /<svg[^>]*>/i.test(content);
-    const hasSvgNamespace = /xmlns="http:\/\/www\.w3\.org\/2000\/svg"/i.test(content);
-    const hasClosingSvgTag = /<\/svg>/i.test(content);
-    
-    // 检查是否包含SVG图形元素
-    const hasGraphicElements = /<(path|rect|circle|ellipse|line|polyline|polygon|text|g|use|image)[^>]*>/i.test(content);
-    
-    return hasSvgTag && hasClosingSvgTag && (hasSvgNamespace || hasGraphicElements);
-}
-
-// Android Vector Drawable识别函数
-function isAndroidVectorDrawable(content) {
-    // 检查是否包含Android Vector Drawable特征
-    const hasAndroidNamespace = /xmlns:android="http:\/\/schemas\.android\.com\/apk\/res\/android"/i.test(content);
-    const hasVectorTag = /<vector[^>]*>/i.test(content);
-    const hasClosingVectorTag = /<\/vector>/i.test(content);
-    const hasPathElement = /<path[^>]*>/i.test(content);
-    
-    return hasAndroidNamespace && hasVectorTag && hasClosingVectorTag && hasPathElement;
-}
-
 async function scanDirectoryRecursive(currentPath, results) {
     try {
         const items = await fs.readdir(currentPath);
@@ -112,29 +115,24 @@ async function scanDirectoryRecursive(currentPath, results) {
                     const ext = path.extname(item).toLowerCase();
                     const isSvg = ext === '.svg' || ext === '.xml';
                     
-                    results.allFiles.push(fullPath);
-                    global.scanProgress.processedFiles++;
-                    
                     if (isSvg) {
                         try {
                             const content = await fs.readFile(fullPath, 'utf8');
-                            
-                            // 更精确的SVG识别算法
                             const isRealSVG = isValidSVG(content);
                             const isAndroidVector = isAndroidVectorDrawable(content);
                             
                             if (isRealSVG || isAndroidVector) {
-                                results.svgFiles.push({
-                                    path: fullPath,
+                                const fileInfo = {
                                     name: item,
-                                    content: content,
+                                    path: fullPath,
                                     size: stat.size,
-                                    modified: stat.mtime,
                                     type: isAndroidVector ? 'android-vector' : 'svg'
-                                });
+                                };
+                                
+                                results.svgFiles.push(fileInfo);
                                 global.scanProgress.foundSVGFiles++;
                                 
-                                // 打印发现SVG文件的进度
+                                // 每100个文件输出一次进度
                                 if (global.scanProgress.foundSVGFiles % 100 === 0) {
                                     console.log(`已发现 ${global.scanProgress.foundSVGFiles} 个SVG文件...`);
                                 }
@@ -143,7 +141,15 @@ async function scanDirectoryRecursive(currentPath, results) {
                             console.warn(`无法读取文件 ${fullPath}: ${readError.message}`);
                         }
                     }
+                    
+                    results.allFiles.push({
+                        name: item,
+                        path: fullPath,
+                        size: stat.size
+                    });
                 }
+                
+                global.scanProgress.processedFiles++;
             } catch (statError) {
                 console.warn(`无法访问 ${fullPath}: ${statError.message}`);
             }
@@ -154,38 +160,25 @@ async function scanDirectoryRecursive(currentPath, results) {
 }
 
 // API路由
+
+// 扫描目录
 app.post('/api/scan', async (req, res) => {
-    const { path: scanPath } = req.body;
-    
-    if (!scanPath) {
-        return res.status(400).json({ error: '请提供目录路径' });
-    }
-
     try {
-        // 检查路径是否存在
-        const stat = await fs.stat(scanPath);
-        if (!stat.isDirectory()) {
-            return res.status(400).json({ error: '提供的路径不是一个有效的目录' });
+        const { path: scanPath } = req.body;
+        
+        if (!scanPath) {
+            return res.status(400).json({ error: '请提供扫描路径' });
         }
-
-        console.log(`开始扫描目录: ${scanPath}`);
+        
         const results = await scanDirectory(scanPath);
-        
-        console.log(`扫描完成: 发现 ${results.allFiles.length} 个文件，其中 ${results.svgFiles.length} 个SVG文件`);
-        
-        // 保存扫描结果到全局变量
         global.scanResults = results;
         
         res.json({
             success: true,
-            data: results,
-            message: `扫描完成！发现 ${results.svgFiles.length} 个SVG文件`
+            data: results
         });
     } catch (error) {
-        console.error('扫描错误:', error);
-        res.status(500).json({ 
-            error: error.message || '扫描过程中发生错误' 
-        });
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -193,63 +186,72 @@ app.post('/api/scan', async (req, res) => {
 app.get('/api/scan-progress', (req, res) => {
     res.json({
         success: true,
-        data: global.scanProgress || {
-            totalFiles: 0,
-            processedFiles: 0,
-            foundSVGFiles: 0,
-            currentDirectory: '',
-            isScanning: false
-        }
+        data: global.scanProgress
     });
 });
 
-// 分页获取SVG文件列表
+// 获取SVG文件列表（分页和搜索）
 app.get('/api/svg-files', (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 200;
-    const search = req.query.search || '';
-    
-    // 从全局变量获取扫描结果（在实际应用中应该使用数据库或缓存）
-    if (!global.scanResults) {
-        return res.status(404).json({ error: '请先扫描目录' });
-    }
-    
-    let filteredFiles = global.scanResults.svgFiles;
-    
-    // 搜索过滤 - 只匹配文件名
-    if (search) {
-        const searchLower = search.toLowerCase();
-        filteredFiles = filteredFiles.filter(file => 
-            file.name.toLowerCase().includes(searchLower)
-        );
-    }
-    
-    const totalFiles = filteredFiles.length;
-    const totalPages = Math.ceil(totalFiles / limit);
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const files = filteredFiles.slice(startIndex, endIndex);
-    
-    res.json({
-        success: true,
-        data: {
-            files,
-            pagination: {
-                page,
-                limit,
-                totalFiles,
-                totalPages,
-                hasNext: page < totalPages,
-                hasPrev: page > 1
-            }
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 200;
+        const search = req.query.search || '';
+        
+        if (!global.scanResults) {
+            return res.json({
+                success: true,
+                data: {
+                    files: [],
+                    pagination: {
+                        page: 1,
+                        limit,
+                        totalFiles: 0,
+                        totalPages: 0,
+                        hasNext: false,
+                        hasPrev: false
+                    }
+                }
+            });
         }
-    });
+        
+        let filteredFiles = global.scanResults.svgFiles;
+        
+        // 搜索过滤 - 只匹配文件名
+        if (search) {
+            const searchLower = search.toLowerCase();
+            filteredFiles = filteredFiles.filter(file => 
+                file.name.toLowerCase().includes(searchLower)
+            );
+        }
+        
+        const totalFiles = filteredFiles.length;
+        const totalPages = Math.ceil(totalFiles / limit);
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const files = filteredFiles.slice(startIndex, endIndex);
+        
+        res.json({
+            success: true,
+            data: {
+                files,
+                pagination: {
+                    page,
+                    limit,
+                    totalFiles,
+                    totalPages,
+                    hasNext: page < totalPages,
+                    hasPrev: page > 1
+                }
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Android Vector Drawable转换为SVG的函数
 function androidVectorToSvg(vectorContent) {
     try {
-        // 简单的转换逻辑，将Android Vector Drawable转换为标准SVG
         let svgContent = vectorContent;
         
         // 替换Android命名空间
@@ -279,7 +281,7 @@ function androidVectorToSvg(vectorContent) {
         return svgContent;
     } catch (error) {
         console.error('转换Android Vector Drawable失败:', error);
-        return vectorContent; // 如果转换失败，返回原始内容
+        return vectorContent;
     }
 }
 
@@ -303,14 +305,19 @@ app.get('/api/file/:filePath(*)', async (req, res) => {
 
 // 健康检查
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        plugin: 'Android Studio SVG Previewer'
+    });
 });
 
 // 启动服务器
 app.listen(PORT, '127.0.0.1', () => {
-    console.log(`🚀 SVG浏览器服务器运行在 http://localhost:${PORT}`);
+    console.log(`🚀 Android Studio SVG预览器插件启动`);
     console.log(`📁 访问 http://localhost:${PORT} 开始使用`);
-    console.log(`🔧 作为Android Studio插件运行`);
+    console.log(`🔧 支持扫描用户电脑上的SVG和Vector Drawable文件`);
+    console.log(`📱 专为Android Studio插件设计`);
 });
 
 module.exports = app; 

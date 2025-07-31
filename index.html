@@ -485,7 +485,7 @@
         </div>
 
         <div id="search-section" class="search-section" style="display: none;">
-            <input type="text" id="searchInput" class="search-input" placeholder="搜索SVG文件..." />
+                            <input type="text" id="searchInput" class="search-input" placeholder="搜索文件名..." />
         </div>
 
         <div id="gallery" class="gallery">
@@ -542,7 +542,7 @@
             }
 
             setDefaultPath() {
-                // 设置默认路径为当前目录
+                // 设置默认路径为用户电脑的合适目录
                 this.pathInput.value = '.';
             }
 
@@ -591,6 +591,12 @@
             async startScan() {
                 const path = this.pathInput.value.trim();
                 if (!path) {
+                    this.showStatus('请输入有效的目录路径', 'error');
+                    return;
+                }
+
+                // 检查路径格式 - 允许用户电脑路径
+                if (!path || path.trim() === '') {
                     this.showStatus('请输入有效的目录路径', 'error');
                     return;
                 }
