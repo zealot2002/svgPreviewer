@@ -105,6 +105,12 @@ async function scanDirectoryRecursive(currentPath, results) {
                 const stat = await fs.stat(fullPath);
                 
                 if (stat.isDirectory()) {
+                    // 过滤掉build目录及其子目录
+                    if (item.toLowerCase() === 'build') {
+                        console.log(`跳过build目录: ${fullPath}`);
+                        continue;
+                    }
+                    
                     // 递归扫描子目录
                     await scanDirectoryRecursive(fullPath, results);
                 } else if (stat.isFile()) {
