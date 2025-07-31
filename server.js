@@ -310,7 +310,6 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, '127.0.0.1', () => {
     console.log(`🚀 SVG浏览器服务器运行在 http://localhost:${PORT}`);
     console.log(`📁 访问 http://localhost:${PORT} 开始使用`);
-    console.log(`🔧 作为Android Studio插件运行`);
 });
 
 module.exports = app; 
