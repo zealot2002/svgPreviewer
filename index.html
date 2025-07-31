@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG 浏览器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .input-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .input-group input {
+            flex: 1;
+            min-width: 300px;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            border: 1px solid #2196f3;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2196f3, #21cbf3);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: #1976d2;
+            margin-bottom: 5px;
+        }
+
+        .progress-details {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .gallery {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .search-section {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .pagination {
+            padding: 20px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination .page-info {
+            margin: 0 15px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .file-type-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .svg-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .svg-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .svg-preview {
+            width: 100%;
+            height: 200px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #e9ecef;
+            padding: 10px;
+        }
+
+        .svg-preview svg {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .svg-info {
+            padding: 15px;
+        }
+
+        .svg-filename {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+
+        .svg-path {
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .empty-state p {
+            font-size: 1.1em;
+            opacity: 0.8;
+        }
+
+        .stats {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .stat-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .input-group input {
+                min-width: auto;
+            }
+            
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+            }
+            
+            .stats {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 SVG 浏览器</h1>
+            <p>递归遍历目录，发现并预览所有SVG文件</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input type="text" id="pathInput" placeholder="请输入要扫描的目录路径，例如: /path/to/directory" value="">
+                <button class="btn" id="scanBtn">开始扫描</button>
+            </div>
+            <div id="status" class="status" style="display: none;"></div>
+            <div id="progress-container" class="progress-container" style="display: none;">
+                <div class="progress-text">正在扫描目录...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-details">
+                    <span id="progress-current">0</span>
+                    <span id="progress-found">已发现: 0 个SVG文件</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="search-section" class="search-section" style="display: none;">
+            <input type="text" id="searchInput" class="search-input" placeholder="搜索SVG文件..." />
+        </div>
+
+        <div id="gallery" class="gallery">
+            <div class="empty-state">
+                <h3>📁 等待扫描</h3>
+                <p>请输入目录路径并点击"开始扫描"来发现SVG文件</p>
+            </div>
+        </div>
+
+        <div id="pagination" class="pagination" style="display: none;">
+            <button id="prevBtn" class="btn">上一页</button>
+            <span class="page-info" id="pageInfo">第 1 页，共 1 页</span>
+            <button id="nextBtn" class="btn">下一页</button>
+        </div>
+
+        <div id="stats" class="stats" style="display: none;">
+            <div class="stat-item">
+                <span>发现文件:</span>
+                <span class="stat-number" id="totalFiles">0</span>
+            </div>
+            <div class="stat-item">
+                <span>SVG文件:</span>
+                <span class="stat-number" id="svgFiles">0</span>
+            </div>
+            <div class="stat-item">
+                <span>扫描时间:</span>
+                <span class="stat-number" id="scanTime">0ms</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class SVGScanner {
+            constructor() {
+                this.pathInput = document.getElementById('pathInput');
+                this.scanBtn = document.getElementById('scanBtn');
+                this.status = document.getElementById('status');
+                this.gallery = document.getElementById('gallery');
+                this.stats = document.getElementById('stats');
+                this.searchSection = document.getElementById('search-section');
+                this.searchInput = document.getElementById('searchInput');
+                this.pagination = document.getElementById('pagination');
+                this.prevBtn = document.getElementById('prevBtn');
+                this.nextBtn = document.getElementById('nextBtn');
+                this.pageInfo = document.getElementById('pageInfo');
+                this.progressContainer = document.getElementById('progress-container');
+                this.progressFill = document.getElementById('progress-fill');
+                this.progressCurrent = document.getElementById('progress-current');
+                this.progressFound = document.getElementById('progress-found');
+                
+                this.currentPage = 1;
+                this.currentSearch = '';
+                this.pageSize = 20;
+                this.progressInterval = null;
+                
+                this.bindEvents();
+                this.setDefaultPath();
+            }
+
+            setDefaultPath() {
+                // 设置默认路径为当前目录
+                this.pathInput.value = '.';
+            }
+
+            bindEvents() {
+                this.scanBtn.addEventListener('click', () => this.startScan());
+                this.pathInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.startScan();
+                    }
+                });
+                
+                this.searchInput.addEventListener('input', (e) => {
+                    this.currentSearch = e.target.value;
+                    this.currentPage = 1;
+                    this.loadSVGFiles();
+                });
+                
+                this.prevBtn.addEventListener('click', () => {
+                    if (this.currentPage > 1) {
+                        this.currentPage--;
+                        this.loadSVGFiles();
+                    }
+                });
+                
+                this.nextBtn.addEventListener('click', () => {
+                    this.currentPage++;
+                    this.loadSVGFiles();
+                });
+            }
+
+            showStatus(message, type = 'loading') {
+                this.status.textContent = message;
+                this.status.className = `status ${type}`;
+                this.status.style.display = 'block';
+            }
+
+            hideStatus() {
+                this.status.style.display = 'none';
+            }
+
+            async startScan() {
+                const path = this.pathInput.value.trim();
+                if (!path) {
+                    this.showStatus('请输入有效的目录路径', 'error');
+                    return;
+                }
+
+                this.scanBtn.disabled = true;
+                this.showStatus('正在扫描目录...', 'loading');
+                this.showProgress();
+                this.startProgressTracking();
+                
+                const startTime = Date.now();
+
+                try {
+                    const result = await this.scanDirectory(path);
+                    const scanTime = Date.now() - startTime;
+                    
+                    this.stopProgressTracking();
+                    this.hideProgress();
+                    this.displayResults(result, scanTime);
+                    this.showStatus(`扫描完成！发现 ${result.svgFiles.length} 个SVG文件`, 'success');
+                } catch (error) {
+                    this.stopProgressTracking();
+                    this.hideProgress();
+                    this.showStatus(`扫描失败: ${error.message}`, 'error');
+                } finally {
+                    this.scanBtn.disabled = false;
+                }
+            }
+
+            showProgress() {
+                this.progressContainer.style.display = 'block';
+                this.status.style.display = 'none';
+            }
+
+            hideProgress() {
+                this.progressContainer.style.display = 'none';
+            }
+
+            startProgressTracking() {
+                this.progressInterval = setInterval(async () => {
+                    try {
+                        const response = await fetch('/api/scan-progress');
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.updateProgress(data.data);
+                        }
+                    } catch (error) {
+                        console.error('获取进度失败:', error);
+                    }
+                }, 1000);
+            }
+
+            stopProgressTracking() {
+                if (this.progressInterval) {
+                    clearInterval(this.progressInterval);
+                    this.progressInterval = null;
+                }
+            }
+
+            updateProgress(progress) {
+                if (progress.isScanning) {
+                    const percentage = progress.totalFiles > 0 ? 
+                        Math.min((progress.processedFiles / progress.totalFiles) * 100, 100) : 0;
+                    
+                    this.progressFill.style.width = `${percentage}%`;
+                    this.progressCurrent.textContent = `已处理: ${progress.processedFiles} / ${progress.totalFiles} 个文件`;
+                    this.progressFound.textContent = `已发现: ${progress.foundSVGFiles} 个SVG文件`;
+                }
+            }
+
+            async scanDirectory(path) {
+                try {
+                    const response = await fetch('/api/scan', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ path })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || '扫描请求失败');
+                    }
+
+                    const result = await response.json();
+                    return result.data;
+                } catch (error) {
+                    throw new Error(`扫描失败: ${error.message}`);
+                }
+            }
+
+            displayResults(result, scanTime) {
+                this.updateStats(result.allFiles.length, result.svgFiles.length, scanTime);
+                this.showSearchAndPagination();
+                this.loadSVGFiles();
+            }
+
+            showSearchAndPagination() {
+                this.searchSection.style.display = 'block';
+                this.pagination.style.display = 'flex';
+            }
+
+            async loadSVGFiles() {
+                try {
+                    const response = await fetch(`/api/svg-files?page=${this.currentPage}&limit=${this.pageSize}&search=${encodeURIComponent(this.currentSearch)}`);
+                    
+                    if (!response.ok) {
+                        throw new Error('获取SVG文件列表失败');
+                    }
+
+                    const result = await response.json();
+                    this.renderGallery(result.data.files);
+                    this.updatePagination(result.data.pagination);
+                } catch (error) {
+                    console.error('加载SVG文件失败:', error);
+                    this.showStatus(`加载失败: ${error.message}`, 'error');
+                }
+            }
+
+            updatePagination(pagination) {
+                this.prevBtn.disabled = !pagination.hasPrev;
+                this.nextBtn.disabled = !pagination.hasNext;
+                this.pageInfo.textContent = `第 ${pagination.page} 页，共 ${pagination.totalPages} 页 (共 ${pagination.totalFiles} 个文件)`;
+            }
+
+            updateStats(totalFiles, svgFiles, scanTime) {
+                document.getElementById('totalFiles').textContent = totalFiles;
+                document.getElementById('svgFiles').textContent = svgFiles;
+                document.getElementById('scanTime').textContent = `${scanTime}ms`;
+                this.stats.style.display = 'flex';
+            }
+
+            renderGallery(svgFiles) {
+                if (svgFiles.length === 0) {
+                    this.gallery.innerHTML = `
+                        <div class="empty-state">
+                            <h3>📭 未发现SVG文件</h3>
+                            <p>在指定目录中未找到任何SVG文件</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                this.gallery.innerHTML = svgFiles.map(file => {
+                    const fileType = file.type || 'svg';
+                    const typeLabel = fileType === 'android-vector' ? 'Android' : 'SVG';
+                    
+                    return `
+                        <div class="svg-card">
+                            <div class="svg-preview">
+                                <div class="file-type-badge">${typeLabel}</div>
+                                ${this.getSVGContent(file)}
+                            </div>
+                            <div class="svg-info">
+                                <div class="svg-filename">${file.name}</div>
+                                <div class="svg-path">${file.path}</div>
+                                <div class="svg-size">${this.formatFileSize(file.size)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            getSVGContent(file) {
+                if (file.type === 'android-vector') {
+                    // 转换Android Vector Drawable为SVG
+                    return this.convertAndroidVectorToSvg(file.content);
+                }
+                return file.content;
+            }
+
+            convertAndroidVectorToSvg(vectorContent) {
+                try {
+                    let svgContent = vectorContent;
+                    
+                    // 替换Android命名空间
+                    svgContent = svgContent.replace(/xmlns:android="[^"]*"/g, '');
+                    svgContent = svgContent.replace(/android:/g, '');
+                    
+                    // 转换vector标签为svg
+                    svgContent = svgContent.replace(/<vector/g, '<svg');
+                    svgContent = svgContent.replace(/<\/vector>/g, '</svg>');
+                    
+                    // 转换属性
+                    svgContent = svgContent.replace(/width="([^"]*dp)"/g, 'width="$1"');
+                    svgContent = svgContent.replace(/height="([^"]*dp)"/g, 'height="$1"');
+                    svgContent = svgContent.replace(/viewportWidth="([^"]*)"/g, 'viewBox="0 0 $1 $1"');
+                    svgContent = svgContent.replace(/viewportHeight="([^"]*)"/g, '');
+                    
+                    // 转换path属性
+                    svgContent = svgContent.replace(/pathData="([^"]*)"/g, 'd="$1"');
+                    svgContent = svgContent.replace(/fillColor="([^"]*)"/g, 'fill="$1"');
+                    svgContent = svgContent.replace(/fillType="([^"]*)"/g, 'fill-rule="$1"');
+                    
+                    // 添加SVG命名空间
+                    if (!svgContent.includes('xmlns="http://www.w3.org/2000/svg"')) {
+                        svgContent = svgContent.replace(/<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+                    }
+                    
+                    return svgContent;
+                } catch (error) {
+                    console.error('转换Android Vector Drawable失败:', error);
+                    return vectorContent;
+                }
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new SVGScanner();
+        });
+    </script>
+</body>
+</html> 
