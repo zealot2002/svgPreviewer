@@ -925,22 +925,22 @@
                     `;
                 }).join('');
 
-                // 添加双击复制功能
-                this.addDoubleClickCopyFunctionality();
+                // 添加点击功能
+                this.addClickFunctionality();
             }
 
-            addDoubleClickCopyFunctionality() {
+            addClickFunctionality() {
                 const cards = document.querySelectorAll('.svg-card');
                 console.log(`找到 ${cards.length} 个SVG卡片`);
                 
                 cards.forEach((card, index) => {
-                    card.addEventListener('dblclick', (e) => {
+                    card.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         
                         try {
                             const fileInfoStr = card.dataset.fileInfo;
-                            console.log(`双击卡片 ${index + 1}, fileInfo:`, fileInfoStr);
+                            console.log(`点击卡片 ${index + 1}, fileInfo:`, fileInfoStr);
                             
                             if (!fileInfoStr) {
                                 console.error('没有找到文件信息');
@@ -951,7 +951,7 @@
                             const fileInfo = JSON.parse(fileInfoStr);
                             this.showFileInfoModal(fileInfo);
                         } catch (error) {
-                            console.error('处理双击事件失败:', error);
+                            console.error('处理点击事件失败:', error);
                             this.showToast('显示失败：数据解析错误');
                         }
                     });
