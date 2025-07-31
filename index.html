@@ -33,7 +33,7 @@
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 20px;
             text-align: center;
         }
 
@@ -49,7 +49,7 @@
         }
 
         .input-section {
-            padding: 20px;
+            padding: 15px;
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
         }
@@ -165,14 +165,14 @@
         .gallery {
             padding: 15px;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 8px;
-            max-height: 70vh;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 6px;
+            max-height: 85vh;
             overflow-y: auto;
         }
 
         .search-section {
-            padding: 15px 20px;
+            padding: 10px 15px;
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
         }
@@ -194,7 +194,7 @@
         }
 
         .pagination {
-            padding: 15px 20px;
+            padding: 10px 15px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -288,7 +288,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             color: white;
             padding: 12px;
             opacity: 0;
@@ -299,6 +299,8 @@
             align-items: center;
             text-align: center;
             border-radius: 8px;
+            user-select: text;
+            cursor: text;
         }
 
         .svg-card:hover .svg-info {
@@ -312,6 +314,8 @@
             word-break: break-all;
             font-size: 12px;
             line-height: 1.3;
+            user-select: text;
+            cursor: text;
         }
 
         .svg-path {
@@ -320,11 +324,15 @@
             word-break: break-all;
             line-height: 1.2;
             margin-bottom: 6px;
+            user-select: text;
+            cursor: text;
         }
 
         .svg-size {
             font-size: 10px;
             color: #aaa;
+            user-select: text;
+            cursor: text;
         }
 
         .empty-state {
@@ -345,7 +353,7 @@
         }
 
         .stats {
-            padding: 15px 20px;
+            padding: 10px 15px;
             background: #f8f9fa;
             border-top: 1px solid #e9ecef;
             display: flex;
@@ -382,8 +390,8 @@
             }
             
             .gallery {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-                gap: 6px;
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                gap: 5px;
                 padding: 10px;
             }
             
@@ -395,13 +403,13 @@
 
         @media (min-width: 1200px) {
             .gallery {
-                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
             }
         }
 
         @media (min-width: 1600px) {
             .gallery {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
             }
         }
     </style>
@@ -690,14 +698,47 @@
                                 <div class="file-type-badge">${typeLabel}</div>
                                 ${this.getSVGContent(file)}
                             </div>
-                            <div class="svg-info">
-                                <div class="svg-filename">${file.name}</div>
-                                <div class="svg-path">${file.path}</div>
-                                <div class="svg-size">${this.formatFileSize(file.size)}</div>
+                            <div class="svg-info" title="点击可复制文件路径">
+                                <div class="svg-filename" title="文件名">${file.name}</div>
+                                <div class="svg-path" title="文件路径">${file.path}</div>
+                                <div class="svg-size" title="文件大小">${this.formatFileSize(file.size)}</div>
                             </div>
                         </div>
                     `;
                 }).join('');
+
+                // 添加点击复制功能
+                this.addCopyFunctionality();
+            }
+
+            addCopyFunctionality() {
+                const infoElements = document.querySelectorAll('.svg-info');
+                infoElements.forEach(info => {
+                    info.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const pathElement = info.querySelector('.svg-path');
+                        if (pathElement) {
+                            const textToCopy = pathElement.textContent;
+                            navigator.clipboard.writeText(textToCopy).then(() => {
+                                // 显示复制成功提示
+                                this.showCopySuccess(info);
+                            }).catch(err => {
+                                console.error('复制失败:', err);
+                            });
+                        }
+                    });
+                });
+            }
+
+            showCopySuccess(element) {
+                const originalOpacity = element.style.opacity;
+                element.style.background = 'rgba(76, 175, 80, 0.9)';
+                element.style.opacity = '1';
+                
+                setTimeout(() => {
+                    element.style.background = 'rgba(0, 0, 0, 0.9)';
+                    element.style.opacity = originalOpacity;
+                }, 1000);
             }
 
             getSVGContent(file) {
