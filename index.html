@@ -604,6 +604,148 @@
         .modal-btn-secondary:hover {
             background: #e9ecef;
         }
+
+        /* 搜索和视图切换区域 */
+        .search-and-view {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .view-toggle {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 4px;
+            border: 1px solid #e9ecef;
+        }
+
+        .view-btn {
+            background: none;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #666;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .view-btn:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .view-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .view-icon {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* 列表视图样式 */
+        .gallery.list-view {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 15px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .gallery.list-view .svg-card {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            height: auto;
+            min-height: 60px;
+            padding: 12px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .gallery.list-view .svg-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .gallery.list-view .svg-preview {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            height: auto;
+            padding: 0;
+        }
+
+        .gallery.list-view .svg-preview svg {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+        }
+
+        .gallery.list-view .file-type-badge {
+            position: static;
+            margin-left: auto;
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .list-item-info {
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .list-item-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .list-item-path {
+            color: #666;
+            font-size: 12px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            word-break: break-all;
+        }
+
+        .list-item-size {
+            color: #999;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .search-and-view {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .view-toggle {
+                align-self: center;
+            }
+
+            .gallery.list-view .svg-preview {
+                gap: 10px;
+            }
+
+            .list-item-info {
+                margin-left: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -632,7 +774,17 @@
         </div>
 
         <div id="search-section" class="search-section" style="display: none;">
-                            <input type="text" id="searchInput" class="search-input" placeholder="搜索文件名..." />
+            <div class="search-and-view">
+                <input type="text" id="searchInput" class="search-input" placeholder="搜索文件名..." />
+                <div class="view-toggle">
+                    <button id="gridViewBtn" class="view-btn active" title="网格视图">
+                        <span class="view-icon">⊞</span>
+                    </button>
+                    <button id="listViewBtn" class="view-btn" title="列表视图">
+                        <span class="view-icon">☰</span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div id="gallery" class="gallery">
@@ -700,6 +852,7 @@
                 this.currentSearch = '';
                 this.pageSize = 200;
                 this.progressInterval = null;
+                this.currentView = 'grid'; // 默认网格视图
                 
                 this.bindEvents();
                 this.setDefaultPath();
@@ -735,6 +888,29 @@
                     this.currentPage++;
                     this.loadSVGFiles();
                 });
+
+                // 视图切换事件
+                this.gridViewBtn = document.getElementById('gridViewBtn');
+                this.listViewBtn = document.getElementById('listViewBtn');
+                
+                this.gridViewBtn.addEventListener('click', () => this.switchToGridView());
+                this.listViewBtn.addEventListener('click', () => this.switchToListView());
+            }
+
+            switchToGridView() {
+                this.currentView = 'grid';
+                this.gallery.classList.remove('list-view');
+                this.gridViewBtn.classList.add('active');
+                this.listViewBtn.classList.remove('active');
+                this.renderGallery(this.currentFiles || []);
+            }
+
+            switchToListView() {
+                this.currentView = 'list';
+                this.gallery.classList.add('list-view');
+                this.listViewBtn.classList.add('active');
+                this.gridViewBtn.classList.remove('active');
+                this.renderGallery(this.currentFiles || []);
             }
 
             showStatus(message, type = 'loading') {
@@ -894,6 +1070,8 @@
             }
 
             renderGallery(svgFiles) {
+                this.currentFiles = svgFiles; // 保存当前文件列表
+                
                 if (svgFiles.length === 0) {
                     this.gallery.innerHTML = `
                         <div class="empty-state">
@@ -904,26 +1082,56 @@
                     return;
                 }
 
-                this.gallery.innerHTML = svgFiles.map(file => {
-                    const fileType = file.type || 'svg';
-                    const typeLabel = fileType === 'android-vector' ? 'Android' : 'SVG';
-                    
-                    const fileInfo = {
-                        name: file.name,
-                        path: file.path,
-                        size: this.formatFileSize(file.size),
-                        type: fileType
-                    };
-                    
-                    return `
-                        <div class="svg-card" data-file-info='${JSON.stringify(fileInfo)}'>
-                            <div class="svg-preview">
-                                <div class="file-type-badge">${typeLabel}</div>
-                                ${this.getSVGContent(file)}
+                if (this.currentView === 'list') {
+                    // 列表视图
+                    this.gallery.innerHTML = svgFiles.map(file => {
+                        const fileType = file.type || 'svg';
+                        const typeLabel = fileType === 'android-vector' ? 'Android' : 'SVG';
+                        
+                        const fileInfo = {
+                            name: file.name,
+                            path: file.path,
+                            size: this.formatFileSize(file.size),
+                            type: fileType
+                        };
+                        
+                        return `
+                            <div class="svg-card" data-file-info='${JSON.stringify(fileInfo)}'>
+                                <div class="svg-preview">
+                                    ${this.getSVGContent(file)}
+                                    <div class="list-item-info">
+                                        <div class="list-item-name">${file.name}</div>
+                                        <div class="list-item-path">${file.path}</div>
+                                        <div class="list-item-size">${this.formatFileSize(file.size)}</div>
+                                    </div>
+                                    <div class="file-type-badge">${typeLabel}</div>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                }).join('');
+                        `;
+                    }).join('');
+                } else {
+                    // 网格视图
+                    this.gallery.innerHTML = svgFiles.map(file => {
+                        const fileType = file.type || 'svg';
+                        const typeLabel = fileType === 'android-vector' ? 'Android' : 'SVG';
+                        
+                        const fileInfo = {
+                            name: file.name,
+                            path: file.path,
+                            size: this.formatFileSize(file.size),
+                            type: fileType
+                        };
+                        
+                        return `
+                            <div class="svg-card" data-file-info='${JSON.stringify(fileInfo)}'>
+                                <div class="svg-preview">
+                                    <div class="file-type-badge">${typeLabel}</div>
+                                    ${this.getSVGContent(file)}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
 
                 // 添加点击功能
                 this.addClickFunctionality();
