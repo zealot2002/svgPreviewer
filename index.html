@@ -457,6 +457,153 @@
                 grid-template-columns: repeat(auto-fit, 50px);
             }
         }
+
+        /* 对话框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-dialog {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-dialog {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .modal-content {
+            margin-bottom: 20px;
+        }
+
+        .file-info-item {
+            display: flex;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
+
+        .file-info-label {
+            font-weight: 600;
+            color: #555;
+            min-width: 80px;
+            margin-right: 12px;
+        }
+
+        .file-info-value {
+            color: #333;
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .file-info-path {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            color: #495057;
+            border: 1px solid #e9ecef;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .modal-btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 1px solid #e9ecef;
+        }
+
+        .modal-btn-secondary:hover {
+            background: #e9ecef;
+        }
     </style>
 </head>
 <body>
@@ -495,6 +642,23 @@
             <button id="prevBtn" class="btn">上一页</button>
             <span class="page-info" id="pageInfo">第 1 页，共 1 页</span>
             <button id="nextBtn" class="btn">下一页</button>
+        </div>
+
+        <!-- 文件信息对话框 -->
+        <div id="fileInfoModal" class="modal-overlay">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h3 class="modal-title">📄 文件信息</h3>
+                    <button class="modal-close" id="modalClose">&times;</button>
+                </div>
+                <div class="modal-content" id="modalContent">
+                    <!-- 文件信息将在这里动态插入 -->
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn modal-btn-secondary" id="modalCopy">复制信息</button>
+                    <button class="modal-btn modal-btn-primary" id="modalCloseBtn">关闭</button>
+                </div>
+            </div>
         </div>
 
         <div id="stats" class="stats" style="display: none;">
@@ -780,28 +944,103 @@
                             
                             if (!fileInfoStr) {
                                 console.error('没有找到文件信息');
-                                this.showToast('复制失败：没有文件信息');
+                                this.showToast('显示失败：没有文件信息');
                                 return;
                             }
                             
                             const fileInfo = JSON.parse(fileInfoStr);
-                            const textToCopy = `文件名: ${fileInfo.name}\n文件路径: ${fileInfo.path}\n文件大小: ${fileInfo.size}\n文件类型: ${fileInfo.type}`;
-                            
-                            console.log('准备复制文本:', textToCopy);
-                            
-                            navigator.clipboard.writeText(textToCopy).then(() => {
-                                console.log('复制成功');
-                                this.showToast('复制成功');
-                            }).catch(err => {
-                                console.error('复制失败:', err);
-                                this.showToast('复制失败');
-                            });
+                            this.showFileInfoModal(fileInfo);
                         } catch (error) {
                             console.error('处理双击事件失败:', error);
-                            this.showToast('复制失败：数据解析错误');
+                            this.showToast('显示失败：数据解析错误');
                         }
                     });
                 });
+            }
+
+            showFileInfoModal(fileInfo) {
+                const modal = document.getElementById('fileInfoModal');
+                const modalContent = document.getElementById('modalContent');
+                
+                // 生成文件信息HTML
+                modalContent.innerHTML = `
+                    <div class="file-info-item">
+                        <div class="file-info-label">文件名:</div>
+                        <div class="file-info-value">${fileInfo.name}</div>
+                    </div>
+                    <div class="file-info-item">
+                        <div class="file-info-label">文件路径:</div>
+                        <div class="file-info-value">
+                            <div class="file-info-path">${fileInfo.path}</div>
+                        </div>
+                    </div>
+                    <div class="file-info-item">
+                        <div class="file-info-label">文件大小:</div>
+                        <div class="file-info-value">${fileInfo.size}</div>
+                    </div>
+                    <div class="file-info-item">
+                        <div class="file-info-label">文件类型:</div>
+                        <div class="file-info-value">${fileInfo.type}</div>
+                    </div>
+                `;
+                
+                // 显示对话框
+                modal.classList.add('show');
+                
+                // 绑定关闭事件
+                this.bindModalEvents(fileInfo);
+            }
+
+            bindModalEvents(fileInfo) {
+                const modal = document.getElementById('fileInfoModal');
+                const modalClose = document.getElementById('modalClose');
+                const modalCloseBtn = document.getElementById('modalCloseBtn');
+                const modalCopy = document.getElementById('modalCopy');
+                
+                // 关闭对话框函数
+                const closeModal = () => {
+                    modal.classList.remove('show');
+                };
+                
+                // 移除之前的事件监听器
+                modalClose.removeEventListener('click', closeModal);
+                modalCloseBtn.removeEventListener('click', closeModal);
+                
+                // 点击关闭按钮
+                modalClose.addEventListener('click', closeModal);
+                modalCloseBtn.addEventListener('click', closeModal);
+                
+                // 点击对话框外部关闭
+                const handleModalClick = (e) => {
+                    if (e.target === modal) {
+                        closeModal();
+                    }
+                };
+                modal.removeEventListener('click', handleModalClick);
+                modal.addEventListener('click', handleModalClick);
+                
+                // 复制信息按钮
+                const handleCopy = () => {
+                    const textToCopy = `文件名: ${fileInfo.name}\n文件路径: ${fileInfo.path}\n文件大小: ${fileInfo.size}\n文件类型: ${fileInfo.type}`;
+                    
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        this.showToast('复制成功');
+                    }).catch(err => {
+                        console.error('复制失败:', err);
+                        this.showToast('复制失败');
+                    });
+                };
+                modalCopy.removeEventListener('click', handleCopy);
+                modalCopy.addEventListener('click', handleCopy);
+                
+                // ESC键关闭对话框
+                const handleKeydown = (e) => {
+                    if (e.key === 'Escape' && modal.classList.contains('show')) {
+                        closeModal();
+                    }
+                };
+                document.removeEventListener('keydown', handleKeydown);
+                document.addEventListener('keydown', handleKeydown);
             }
 
             showToast(message) {
